@@ -15,10 +15,6 @@ cosmo.setup.$(ARCH):
 	source $(BASELOC)/vars/$(ARCH) && cd $< && ./superconfigure
 	touch $@
 
-# Needs a copy of gcc build with --enable-decimal-float to replace the one in cosmopolitan/o/third_party/gcc
-# That can be handled seperately so not explictly requiring it here
-libdfp-1.0.17pre.built.$(ARCH)
-
 readline-8.2.built.$(ARCH): ncurses-6.4.built.$(ARCH)
 bash-5.2.built.$(ARCH): ncurses-6.4.built.$(ARCH) readline-8.2.built.$(ARCH)
 less-643.built.$(ARCH): ncurses-6.4.built.$(ARCH) readline-8.2.built.$(ARCH)
