@@ -14,6 +14,7 @@ mkdir -p include bin lib libexec share $ARCH
 cd $BASELOC
 
 echo "Setting up cosmocc"
+sed -i'' 's/-D__COSMOPOLITAN__ //' "$(readlink -f "$CC")"
 $CC --update >/dev/null
 cd $BASELOC
 rm -f sample.com sample.com.dbg
