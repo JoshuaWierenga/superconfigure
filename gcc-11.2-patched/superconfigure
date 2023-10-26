@@ -36,7 +36,7 @@ SYSROOT_BUILD=$(realpath ./build)
 cd build
 ../$FOLDER/configure --prefix=$COSMOS --with-sysroot="$SYSROOT_BUILD" \
     --with-system-zlib --disable-shared --enable-static --disable-libquadmath \
-    --disable-decimal-float --disable-libitm --disable-fixed-point --disable-lto \
+    --enable-decimal-float --disable-libitm --disable-fixed-point --disable-lto \
     --with-static-standard-libraries --disable-libada --disable-libssp \
     --disable-host-shared --disable-objc-gc --enable-languages=c,c++ --disable-bootstrap \
     --disable-assembly --disable-werror --disable-multilib --enable-tls \

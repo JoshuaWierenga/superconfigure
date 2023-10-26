@@ -21,6 +21,12 @@ $CC sample.c -o sample.com
 ./sample.com
 
 echo "Setting up libz and libzstd in $COSMOS"
+cd $COSMO
+make -s -j$MAXPROC \
+    o/$MODE/third_party/zstd/zstd.a \
+    o/$MODE/third_party/bzip2/bzip2.a \
+    o/$MODE/third_party/sqlite3/libsqlite3.a
+
 cd $COSMOS
 ls $COSMOS/lib
 # 

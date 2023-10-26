@@ -1,0 +1,257 @@
+diff --git a/Makefile.in b/Makefile.in
+index df54f35..f606870 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -122,12 +122,12 @@ sysdep_dirs = @sysdep_dirs@
+ # Find each sysdep directory or convenience directory with a Makefile in it.
+ makefile_dirs := $(foreach odir,$(sysdep_dirs), $(dir $(wildcard $(top_srcdir)/$(odir)/Makefile))) $(top_srcdir)/decNumberMath/ \
+ 		 $(top_srcdir)/ieee754r/ $(top_srcdir)/base-math/ $(top_srcdir)/libdecnumber/ \
+-		 $(top_srcdir)/printf-hooks/ $(top_srcdir)/stdlib/ $(top_srcdir)/tests/
++		 $(top_srcdir)/stdlib/ $(top_srcdir)/tests/
+ 
+ # Like $makefile_dirs but add the $(top_srcdir) reference and strip out the redundant spaces.
+ # This has to be = assigned.
+ all_srcdirs = $(strip $(foreach dir,$(sysdep_dirs), $(top_srcdir)/$(dir))) \
+-	      $(top_srcdir)/libdecnumber $(top_srcdir)/printf-hooks $(top_srcdir)/stdlib \
++	      $(top_srcdir)/libdecnumber $(top_srcdir)/stdlib \
+ 	      $(top_srcdir)/decNumberMath $(top_srcdir)/ieee754r $(top_srcdir)/base-math $(top_srcdir)/ $(top_srcdir)/tests
+ 
+ backend_headers := libdecnumber
+@@ -442,10 +442,7 @@ install: all install-doc install-headers
+ ifeq ("@enable_static@","static")
+ 	$(INSTALL_DATA) -t $(inst_libdir) $(top_builddir)/$(STATIC_LIB)
+ endif
+-	$(INSTALL) -t $(inst_libdir) $(top_builddir)/$(SHARED_REALNAME_LIB)
+ 	$(INSTALL_DATA) -t $(inst_libdir) $(top_builddir)/libdecnumber/libdecnumber.a
+-	ln -f -s $(SHARED_REALNAME_LIB) $(inst_libdir)/$(SHARED_LINKERNAME_LIB)
+-	ln -f -s $(SHARED_REALNAME_LIB) $(inst_libdir)/$(SHARED_SONAME_LIB)
+ 	$(INSTALL_DATA) -D -t $(inst_libdir)/pkgconfig $(top_builddir)/libdfp.pc
+ 	$(INSTALL_DATA) -D -t $(inst_libdir)/pkgconfig $(top_builddir)/libdecnumber.pc
+ .PHONY: install
+diff --git a/configure.ac b/configure.ac
+index 83b6815..d287977 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -191,23 +191,6 @@ EOF
+   rm -f conftest*])
+ AC_SUBST(libdfp_cv_cc_with_decimal_float)
+ 
+-# Check for GLIBC 2.10 headers
+-have_glibc_2_10_headers=yes
+-AC_MSG_CHECKING([for printf-hook register_printf_type() in printf.h to verify GLIBC 2.10])
+-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include "printf.h"]], [[
+- void foo_va (void *mem, va_list *ap)
+- {
+-   return;
+- }
+- register_printf_type (foo_va);
+- ]])],[AC_MSG_RESULT([yes])],[AC_MSG_RESULT([no]); have_glibc_2_10_headers=no])
+-
+-if test x$have_glibc_2_10_headers != xyes; then
+-  AC_MSG_ERROR([Building Libdfp requires a GLIBC printf.h header that
+-		provides the register_printf_type() function which is
+-		available in GLIBC Version 2.10 or later.])
+-fi
+-
+ # Check for std::decimal compiler support
+ AC_CACHE_CHECK(for std::decimal, libdfp_cv_cxxdecimal,
+   [AC_LANG_SAVE
+@@ -516,9 +499,6 @@ AC_TRY_COMPILE([#include <stdio.h>
+ #if !defined __GNUC__ || __GNUC__ < ${gcc_min} || (__GNUC__ == ${gcc_min} && __GNUC_MINOR__ < ${gcc_min_minor})
+ #error insufficient compiler
+ #endif
+-#if !__GLIBC_PREREQ (${glibc_min}, ${glibc_min_minor})
+-# error insufficient glibc version
+-#endif
+ ${gcc_extra}],
+            [libc_cv_compiler_ok=yes],
+            [libc_cv_compiler_ok=no])])
+diff --git a/dfp/bits/dfp_dmathcalls.h b/dfp/bits/dfp_dmathcalls.h
+index 1112876..d1628f6 100644
+--- a/dfp/bits/dfp_dmathcalls.h
++++ b/dfp/bits/dfp_dmathcalls.h
+@@ -22,6 +22,7 @@
+ 
+ /* No guarantees are made about the macros in this header.
+    Use it directly at your own risk!. */
++#include <stdlib.h>
+ 
+ __DECL_D(acos, (__DECIMAL), __THROW)
+ __DECL_D(acosh, (__DECIMAL), __THROW)
+diff --git a/dfp/fenv.h b/dfp/fenv.h
+index f3447a0..4b7fc16 100644
+--- a/dfp/fenv.h
++++ b/dfp/fenv.h
+@@ -35,6 +35,7 @@
+ #ifdef __STDC_WANT_DEC_FP__
+ 
+ #include <features.h>
++#include <stdlib.h>
+ 
+ /* Power6[x] chips support all five of the defined rounding modes [and then
+  * some].  We use the bit pattern in the Power6[x] FPSCR as the values for the
+diff --git a/dfp/math.h b/dfp/math.h
+index 353d348..c383bdc 100644
+--- a/dfp/math.h
++++ b/dfp/math.h
+@@ -41,10 +41,21 @@
+ #ifdef __STDC_WANT_DEC_FP__
+ 
+ #include <stdbool.h>
++#include <stdlib.h>
+ 
+ /* math.h provides prototypes for the classification macros below. */
+ #include <math.h>
+ 
++#define FP_LLOGB0 INT64_MIN
++#define FP_LLOGBNAN FP_LLOGB0
++#define DEC32_SUBNORMAL_MIN __DEC32_SUBNORMAL_MIN__
++#define DEC64_SUBNORMAL_MIN __DEC64_SUBNORMAL_MIN__
++#define DEC128_SUBNORMAL_MIN __DEC128_SUBNORMAL_MIN__
++#define DEC32_MAX __DEC32_MAX__
++#define DEC64_MAX __DEC64_MAX__
++#define DEC128_MAX __DEC128_MAX__
++#define MATH_ERREXCEPT 2
++
+ #define DEC_INFINITY	__builtin_infd32()
+ #define DEC_NAN		__builtin_nand32("")
+ #define HUGE_VAL_D32	__builtin_infd32()
+@@ -154,13 +165,13 @@ __END_DECLS
+ 
+ #define __dfp_isinf(x) \
+      (sizeof (x) == sizeof (float)					      \
+-      ? __isinff (x)							      \
+-      : __dfp_ldbl(__isinf, x))
++      ? __builtin_isinf (x)							      \
++      : __dfp_ldbl(__builtin_isinf, x))
+ 
+ #define __dfp_isnan(x) \
+      (sizeof (x) == sizeof (float)		      			      \
+-      ? __isnanf (x)				      			      \
+-      : __dfp_ldbl(__isnan, x))
++      ? __builtin_isnan (x)				      			      \
++      : __dfp_ldbl(__builtin_isnan, x))
+ 
+ /* A special case here.  Older glibc may not support this.  */
+ #ifdef issignaling
+diff --git a/dfp/stdlib.h b/dfp/stdlib.h
+index 24100ee..33a019a 100644
+--- a/dfp/stdlib.h
++++ b/dfp/stdlib.h
+@@ -31,6 +31,10 @@
+ #include <features.h>
+ #include <stddef.h>
+ 
++#define __THROW libcesque
++#define __attribute_const__ pureconst
++#define __nonnull paramsnonnull
++
+ __BEGIN_DECLS
+ 
+ /* Convert a string to a _Decimal32 number.  */
+@@ -52,7 +56,7 @@ __END_DECLS
+ 
+ #endif /* __STDC_WANT_DEC_FP__  */
+ 
+-#if defined (__STDC_WANT_IEC_60559_DFP_EXT__)
++#if 0 && defined (__STDC_WANT_IEC_60559_DFP_EXT__)
+ 
+ /* Convert a _Decimal32 to string. */
+ extern int strfromd32 (char * __restrict s, size_t n,
+diff --git a/dfp/wchar.h b/dfp/wchar.h
+index c5e7b6f..697fb2a 100644
+--- a/dfp/wchar.h
++++ b/dfp/wchar.h
+@@ -29,6 +29,7 @@
+ 
+ #include <features.h>
+ #include <stddef.h>
++#include <stdlib.h>
+ 
+ __BEGIN_DECLS
+ extern _Decimal32 wcstod32 (__const wchar_t *__restrict __nptr, wchar_t **__restrict __endptr) __THROW;
+diff --git a/libbid/bid_decimal_globals.c b/libbid/bid_decimal_globals.c
+index 5ce0655..8d0136d 100644
+--- a/libbid/bid_decimal_globals.c
++++ b/libbid/bid_decimal_globals.c
+@@ -92,7 +92,7 @@ __dfp_set_status (int excepts) {
+   _IDEC_glbflags |= excepts;
+   if (excepts == INEXACT_EXCEPTION)
+     {
+-      fesetexcept (FE_INEXACT);
++      feraiseexcept (FE_INEXACT);
+     }
+   else
+     {
+@@ -101,7 +101,7 @@ __dfp_set_status (int excepts) {
+       fexcepts = (excepts & UNDERFLOW_EXCEPTION) ? FE_UNDERFLOW : 0;
+       fexcepts = (excepts & ZERO_DIVIDE_EXCEPTION) ? FE_DIVBYZERO : 0;
+       fexcepts = (excepts & INVALID_EXCEPTION) ? FE_INVALID: 0;
+-      fesetexcept (fexcepts);
++      feraiseexcept (fexcepts);
+     }
+ }
+ #endif
+diff --git a/stdlib/Makefile b/stdlib/Makefile
+index 1d4aa79..d461e4d 100644
+--- a/stdlib/Makefile
++++ b/stdlib/Makefile
+@@ -1,2 +1 @@
+-libdfp_files += strtod32 strtod64 strtod128 wcstod32 wcstod64 wcstod128 \
+-		strfromd32 strfromd64 strfromd128
++libdfp_files += strtod32 strtod64 strtod128 wcstod32 wcstod64 wcstod128
+diff --git a/stdlib/strtod32.c b/stdlib/strtod32.c
+index 155bd68..c7f098a 100644
+--- a/stdlib/strtod32.c
++++ b/stdlib/strtod32.c
+@@ -76,6 +76,10 @@
+ # define __DEC_MIN_EXP__ __DEC32_MIN_EXP__
+ #endif
+ 
++#define __locale_t locale_t
++#define isspace_l(c, l) isspace(c)
++#define wcsncasecmp_l(ws1, ws2, n, l) wcsncasecmp(ws1, ws2, n)
++
+ #define DEC_TYPE	FLOAT
+ #define _DECIMAL_SIZE	FLOAT_SIZE
+ #include <numdigits.h>
+@@ -366,20 +370,20 @@ FUNCTION_L_INTERNAL (const STRING_TYPE * nptr, STRING_TYPE ** endptr,
+   if (group)
+     {
+       //grouping = _NL_CURRENT (LC_NUMERIC, GROUPING);
+-      grouping = nl_langinfo (__GROUPING);
++      grouping = localeconv()->grouping;
+       if (*grouping <= 0 || *grouping == CHAR_MAX)
+ 	grouping = NULL;
+       else
+ 	{
+ 	  /* Figure out the thousands separator character.  */
+ #ifdef USE_WIDE_CHAR
+-	  thousandsmb = nl_langinfo(_NL_NUMERIC_THOUSANDS_SEP_WC);
++	  thousandsmb = NULL;
+ 	  mbrtowc(&thousands,thousandsmb, CHAR_MAX, NULL);
+ 
+ 	  if (thousands == L'\0')
+ 	    grouping = NULL;
+ #else
+-	  thousands = nl_langinfo (__THOUSANDS_SEP);
++	  thousands = nl_langinfo (THOUSEP);
+ 	  if (*thousands == '\0')
+ 	    {
+ 	      thousands = NULL;
+@@ -393,13 +397,13 @@ FUNCTION_L_INTERNAL (const STRING_TYPE * nptr, STRING_TYPE ** endptr,
+ 
+   /* Find the locale's decimal point character.  */
+ #ifdef USE_WIDE_CHAR
+-  decimalmb = nl_langinfo(_NL_NUMERIC_DECIMAL_POINT_WC);
++  decimalmb = NULL;
+   mbrtowc(&decimal,decimalmb, CHAR_MAX, NULL);
+   assert (decimal != L'\0');
+ # define decimal_len 1
+ #else
+  // decimal = _NL_CURRENT (LC_NUMERIC, DECIMAL_POINT);
+-  decimal = nl_langinfo(__DECIMAL_POINT);
++  decimal = nl_langinfo(RADIXCHAR);
+   decimal_len = strlen (decimal);
+   assert (decimal_len > 0);
+ #endif
