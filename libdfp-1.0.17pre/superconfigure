@@ -20,12 +20,16 @@ if [[ ! -f "$COSMOS/bin/$ARCH-linux-cosmo-gcc" ]]; then
     exit 1
 fi
 
-rm -rf "$COSMO/o/$MODE/third_party/gcc/bin/"* || true
-mkdir -p "$COSMO/o/$MODE/third_party/gcc/bin" "$COSMO/o/$MODE/third_party/gcc/libexec/gcc/$ARCH-linux-cosmo/11.2.0/"
-cp "$COSMOS/bin/$ARCH-linux-cosmo-"* "$COSMO/o/$MODE/third_party/gcc/bin/"
-find "$COSMOS/libexec/gcc/$ARCH-linux-cosmo/11.2.0/" -maxdepth 1 -type f -execdir cp "{}" "$COSMO/o/$MODE/third_party/gcc/libexec/gcc/$ARCH-linux-cosmo/11.2.0/" ";"
-cp  "$COSMOS/$ARCH-linux-cosmo/bin/ld"* "$COSMO/o/$MODE/third_party/gcc/libexec/gcc/$ARCH-linux-cosmo/11.2.0/"
-chmod +x "$COSMO/o/$MODE/third_party/gcc/bin/"* "$COSMO/o/$MODE/third_party/gcc/libexec/gcc/$ARCH-linux-cosmo/11.2.0/"*
+
+GCCBIN="$COSMO/o/$MODE/third_party/gcc/bin/"
+GCCLIB="$COSMO/o/$MODE/third_party/gcc/libexec/gcc/$ARCH-linux-cosmo/11.2.0/"
+
+rm -rf "$GCCBIN"* || true
+mkdir -p "$GCCBIN" "$GCCLIB"
+cp "$COSMOS/bin/$ARCH-linux-cosmo-"* "$GCCBIN"
+find "$COSMOS/libexec/gcc/$ARCH-linux-cosmo/11.2.0/" -maxdepth 1 -type f -execdir cp "{}" "$GCCLIB" ";"
+cp  "$COSMOS/$ARCH-linux-cosmo/bin/ld.bfd" "$GCCLIB"
+chmod +x "$GCCBIN"* "$GCCLIB"*
 
 FOLDER="libdfp/"
 
