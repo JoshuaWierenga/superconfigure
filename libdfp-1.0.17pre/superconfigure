@@ -12,7 +12,22 @@ if [ -z ${COSMOS+x} ]; then
     exit 1
 fi
 
-FOLDER="libdfp"
+# install prerequisite apegcc with --enable-decimal-float
+# this should have already been built by make so just need to replace $COSMO's stock compiler
+# TODO: Confirm this works for aarch64 and on Windows(does any of superconfigure work on Windows currently?)
+if [[ ! -f "$COSMOS/bin/$ARCH-linux-cosmo-gcc" ]]; then
+    echo "could not find apegcc in COSMOS";
+    exit 1
+fi
+
+rm -rf "$COSMO/o/$MODE/third_party/gcc/bin/"* || true
+mkdir -p "$COSMO/o/$MODE/third_party/gcc/bin" "$COSMO/o/$MODE/third_party/gcc/libexec/gcc/$ARCH-linux-cosmo/11.2.0/"
+cp "$COSMOS/bin/$ARCH-linux-cosmo-"* "$COSMO/o/$MODE/third_party/gcc/bin/"
+find "$COSMOS/libexec/gcc/$ARCH-linux-cosmo/11.2.0/" -maxdepth 1 -type f -execdir cp "{}" "$COSMO/o/$MODE/third_party/gcc/libexec/gcc/$ARCH-linux-cosmo/11.2.0/" ";"
+cp  "$COSMOS/$ARCH-linux-cosmo/bin/ld"* "$COSMO/o/$MODE/third_party/gcc/libexec/gcc/$ARCH-linux-cosmo/11.2.0/"
+chmod +x "$COSMO/o/$MODE/third_party/gcc/bin/"* "$COSMO/o/$MODE/third_party/gcc/libexec/gcc/$ARCH-linux-cosmo/11.2.0/"*
+
+FOLDER="libdfp/"
 
 if [[ -d "$FOLDER" ]]; then
     # we already downloaded it
@@ -29,9 +44,6 @@ else
     # apply patches
     git apply ../cosmo.patch
 fi
-
-# TODO: Find a way to use superconfigure's local gcc build instead of the cosmopolitan shipped one
-# to avoid having to copy it over, or at least automate that copy.
 
 # configure
 autoconf -f || true
