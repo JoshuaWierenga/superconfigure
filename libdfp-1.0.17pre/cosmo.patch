@@ -120,20 +120,20 @@ index 353d348..c383bdc 100644
  /* A special case here.  Older glibc may not support this.  */
  #ifdef issignaling
 diff --git a/dfp/stdlib.h b/dfp/stdlib.h
-index 24100ee..95fe076 100644
+index 24100ee..defb75a 100644
 --- a/dfp/stdlib.h
 +++ b/dfp/stdlib.h
-@@ -31,6 +31,10 @@
- #include <features.h>
- #include <stddef.h>
+@@ -26,6 +26,10 @@
+ #ifndef _DFP_STDLIB_H
+ #define _DFP_STDLIB_H 1
  
 +#define __THROW libcesque
 +#define __attribute_const__ pureconst
 +#define __nonnull paramsnonnull
 +
- __BEGIN_DECLS
+ #ifdef __STDC_WANT_DEC_FP__
  
- /* Convert a string to a _Decimal32 number.  */
+ #include <features.h>
 diff --git a/dfp/wchar.h b/dfp/wchar.h
 index c5e7b6f..697fb2a 100644
 --- a/dfp/wchar.h
@@ -370,7 +370,7 @@ index bdaca0f..81b2aef 100644
 -strong_alias (__register_printf_dfp, register_printf_dfp)
 -hidden_def (__register_printf_dfp)
 diff --git a/stdlib/strfromd32.c b/stdlib/strfromd32.c
-index f66a1c5..15a4de5 100644
+index f66a1c5..2ef489f 100644
 --- a/stdlib/strfromd32.c
 +++ b/stdlib/strfromd32.c
 @@ -22,7 +22,6 @@
@@ -381,6 +381,15 @@ index f66a1c5..15a4de5 100644
  #include <errno.h>
  #include <ctype.h>
  
+@@ -38,7 +37,7 @@ FUNC_NAME (char * __restrict s, size_t n, const char * __restrict format, DECIMA
+ {
+   /* format = %{[.][0-9]*[aAeEfFgG], else behavior undefined.
+      Reuse our printf hook to do this.  */
+-  FILE * f = fmemopen (s, n, "w");
++  FILE * f = fmemopen (s, n, "w+");
+   const void * const args = &fp;
+   const void * const * argsp = &args;
+   const void * const * argp = (const void * const *)&argsp;
 diff --git a/stdlib/strtod32.c b/stdlib/strtod32.c
 index 155bd68..d26e291 100644
 --- a/stdlib/strtod32.c

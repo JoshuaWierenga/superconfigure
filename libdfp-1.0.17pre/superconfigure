@@ -37,6 +37,7 @@ if [[ -d "$FOLDER" ]]; then
     # we already downloaded it
     cd $FOLDER
     make -s -i clean || true
+    make -s -i distclean || true
 else
     # download the source code at a specific commit without downloading everything
     git init "$FOLDER" -q
@@ -50,7 +51,7 @@ else
 fi
 
 # configure
-autoconf -f || true
+autoconf -f
 
 ./configure --disable-shared --enable-static\
     --prefix=$COSMOS\
