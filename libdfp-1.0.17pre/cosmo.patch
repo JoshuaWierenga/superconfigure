@@ -120,16 +120,20 @@ index 353d348..c383bdc 100644
  /* A special case here.  Older glibc may not support this.  */
  #ifdef issignaling
 diff --git a/dfp/stdlib.h b/dfp/stdlib.h
-index 24100ee..defb75a 100644
+index 24100ee..1e69d7b 100644
 --- a/dfp/stdlib.h
 +++ b/dfp/stdlib.h
-@@ -26,6 +26,10 @@
+@@ -26,6 +26,14 @@
  #ifndef _DFP_STDLIB_H
  #define _DFP_STDLIB_H 1
  
 +#define __THROW libcesque
 +#define __attribute_const__ pureconst
 +#define __nonnull paramsnonnull
++#ifndef __BEGIN_DECLS
++#define __BEGIN_DECLS COSMOPOLITAN_C_START_
++#define __END_DECLS COSMOPOLITAN_C_END_
++#endif
 +
  #ifdef __STDC_WANT_DEC_FP__
  
