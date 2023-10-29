@@ -13,32 +13,28 @@ if [ -z ${COSMOS+x} ]; then
     exit 1
 fi
 
-alias strip=$STRIP
-alias ar=$AR
-
 if [[ -f sources.tar.gz ]]; then
     # we already downloaded it
-    cd curl*/
+    cd zlib*/
     make -s -i clean || true
     make -s -i distclean || true
     cd ..
 else
     # download the source code
-    wget -q https://github.com/curl/curl/releases/download/curl-8_4_0/curl-8.4.0.tar.gz -O sources.tar.gz
+    wget -q https://github.com/madler/zlib/releases/download/v1.3/zlib-1.3.tar.gz -O sources.tar.gz
     tar -xzf sources.tar.gz
 
     # apply patches if any
-    patch -p0 -i minimal.diff
+    # patch -p0 -i minimal.diff
 fi
 
 # go into the source folder, configure
-cd curl*/
-./configure --prefix="$COSMOS"\
-    --enable-shared=no --enable-static=yes\
-    --enable-pthreads --with-openssl=$COSMOS\
-    --with-ca-path=/zip/usr/share/ssl/root --without-ca-fallback\
-    --without-pic --with-gnu-ld\
-    CFLAGS="-Os" LIBS="-lbrotlidec -lbrotlienc -lbrotlicommon -lz"
+cd zlib*/
+ARCH="${ARCH:-x86_64}"
+./configure --static --64 --prefix=$COSMOS\
+    --includedir=$COSMOS/include\
+    --eprefix=$COSMOS/bin --libdir=$COSMOS/lib\
+    --archs="-arch $ARCH"
 
 # run make and/or make install
 make -s -j$MAXPROC

@@ -38,7 +38,7 @@ cmake -S ../llvm-project*/llvm -B ./ -G Ninja \
     -DCMAKE_CXX_COMPILER="$CXX"\
     -DCMAKE_INSTALL_PREFIX="$COSMOS"\
     -DLLVM_ENABLE_PROJECTS="clang"\
-    -DCMAKE_BUILD_TYPE=RelWithDebInfo\
+    -DCMAKE_BUILD_TYPE=MinSizeRel\
     -DLLVM_TARGETS_TO_BUILD="X86;AArch64"\
     -DLLVM_PARALLEL_COMPILE_JOBS="$MAXPROC"\
     -DLLVM_PARALLEL_LINK_JOBS=1\
@@ -58,7 +58,7 @@ cmake -S ../llvm-project*/llvm -B ./ -G Ninja \
     -DLLVM_ENABLE_LIBTHREADS=ON
 
 # run make and/or make install
-ninja -j$MAXPROC clang-format
-cp ./bin/clang-format $COSMOS/bin
+ninja -j$MAXPROC -k0 || true
+cp bin/* $COSMOS/bin
 
 echo "DONE."

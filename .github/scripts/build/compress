@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -eux
 
-make ARCH=x86_64 cli
-make ARCH=aarch64 cli
+make ARCH=x86_64 compress
+make ARCH=aarch64 compress
 rm -f cosmo.setup.*
 
 export MODE=
@@ -40,42 +40,15 @@ mkdir -p "$RESULTS"
 
 # the zip folder
 cd "$CONFIGDIR"
-mkdir -p share
-cp -r $COSMOS_X86/share/terminfo ./share
-ls -al /zip
 
 
 cd $BASELOC
 ls -al ./
 
-# bash
-apelinkpls $RESULTS/bin/bash.com $COSMOS_X86/bin/bash $COSMOS_AARCH64/bin/bash
-cd "$CONFIGDIR"
-zip -r $RESULTS/bin/bash.com share/terminfo
-cd "$BASELOC"
-
-# berry
-apelinkpls $RESULTS/bin/berry.com $COSMOS_X86/bin/berry $COSMOS_AARCH64/bin/berry
-cd "$CONFIGDIR"
-zip -r $RESULTS/bin/berry.com share/terminfo
-cd "$BASELOC"
-
-# less
-apelinkpls $RESULTS/bin/less.com $COSMOS_X86/bin/less $COSMOS_AARCH64/bin/less
-cd "$CONFIGDIR"
-zip -r $RESULTS/bin/less.com share/terminfo
-cd "$BASELOC"
-
 FILELIST='
-echo cp ls mv sha256sum [ test base64 cat chown chmod dd cksum
-df dir dirname basename du env expand expr factor join kill link
-ln logname id md5sum head mkdir nice nl nproc numfmt od pr pinky
-rm pathchk mktemp printenv seq sha1sum sha256sum stat sha384sum
-stty sha224sum readlink realpath shred sum tail head uname tty
-tsort wc uptime unlink uniq unexpand yes sleep touch true false rmdir
-find locate xargs
-tree make lua sqlite3 awk sed tidy
-grep'
+zip unzip bzip2 zstd
+xz brotli gzip pigz
+tar'
 
 for EXE in $FILELIST; do
     apelinkpls $RESULTS/bin/$EXE.com $COSMOS_X86/bin/$EXE $COSMOS_AARCH64/bin/$EXE

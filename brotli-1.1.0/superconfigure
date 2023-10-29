@@ -12,27 +12,30 @@ if [ -z ${COSMOS+x} ]; then
     exit 1
 fi
 
-if [ -f "sources.tar.gz" ]; then
+if [[ -f sources.tar.gz ]]; then
     # we already downloaded it
-    cd tree*
-    make -s -i clean || true
-    make -s -i distclean || true
-    cd ..
+    rm -rf build
+    mkdir -p build
 else
     # download the source code
-    wget -q https://github.com/Old-Man-Programmer/tree/archive/refs/tags/2.1.1.tar.gz -O sources.tar.gz
-    tar -xf sources.tar.gz
+    wget -q https://github.com/google/brotli/archive/refs/tags/v1.1.0.tar.gz -O sources.tar.gz
+    tar -xzf sources.tar.gz
 
     # apply patches if any
-    patch -p0 -i minimal.diff
+    # patch -p0 -i
+    mkdir -p build
 fi
 
 
 # go into the source folder, configure
-cd tree*
+cd build/
+cmake -G Ninja ../brotli*/\
+    -DCMAKE_INSTALL_PREFIX="$COSMOS"\
+    -DBUILD_SHARED_LIBS=OFF\
+    -DCMAKE_C_FLAGS="-Os"
 
 # run make and/or make install
-make -s -j$MAXPROC
-make install -s -j$MAXPROC
+ninja -j$MAXPROC
+ninja install -j$MAXPROC
 
 echo "DONE."
