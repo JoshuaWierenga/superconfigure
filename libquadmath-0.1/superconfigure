@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -e
+
+# check for cosmo dirs
+if [ -z ${COSMO+x} ]; then
+    echo "could not find COSMO source directory!";
+    exit 1
+fi
+
+if [ -z ${COSMOS+x} ]; then
+    echo "could not find COSMOS install directory!";
+    exit 1
+fi
+
+GCCFOLDER="../gcc-11.2-patched/gcc/"
+# Need three levels for config.status to find config-ml.in
+ROOTFOLDER="source/"
+GCCSOURCEFOLDER="$ROOTFOLDER/gcc/"
+QUADSOURCEFOLDER="$GCCSOURCEFOLDER/libquadmath/"
+
+if [[ -d "$QUADSOURCEFOLDER" ]]; then
+    # we already copied it
+    cd $QUADSOURCEFOLDER
+    make -s -i clean || true
+    make -s -i distclean || true
+else
+    # copy the source code
+    mkdir -p $GCCSOURCEFOLDER $GCCSOURCEFOLDER/gcc
+    cp $GCCFOLDER/config-ml.in $ROOTFOLDER
+    cp -r $GCCFOLDER/libquadmath/ $GCCSOURCEFOLDER
+    cp $GCCFOLDER/{config.guess,config.sub,depcomp,install-sh,ltmain.sh,missing} $GCCSOURCEFOLDER
+    cp $GCCFOLDER/gcc/BASE-VER $GCCSOURCEFOLDER/gcc
+    cp $GCCFOLDER/gcc/doc/include/fdl.texi $QUADSOURCEFOLDER
+    cp $GCCFOLDER/include/longlong.h $QUADSOURCEFOLDER/printf
+    cd $QUADSOURCEFOLDER
+fi
+
+# run configure
+./configure --disable-shared --enable-static --prefix="$COSMOS"\
+    CFLAGS="-Os" LDFLAGS="-L$COSMOS/lib/linux" LIBS="-lclang_rt.builtins-x86_64"
+
+# run make and/or make install
+make -s -j$MAXPROC
+make install -s -j$MAXPROC
+./libtool --finish "$COSMOS"/lib/
+cp "$COSMOS"/lib/gcc/11.2.0/include/quadmath* "$COSMOS"/include/
+
+echo "DONE."

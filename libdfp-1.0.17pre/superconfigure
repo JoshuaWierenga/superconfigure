@@ -20,7 +20,6 @@ if [[ ! -f "$COSMOS/bin/$ARCH-linux-cosmo-gcc" ]]; then
     exit 1
 fi
 
-
 GCCBIN="$COSMO/o/$MODE/third_party/gcc/bin/"
 GCCLIB="$COSMO/o/$MODE/third_party/gcc/libexec/gcc/$ARCH-linux-cosmo/11.2.0/"
 
@@ -50,11 +49,10 @@ else
     git apply ../cosmo.patch
 fi
 
-# configure
+# run configure
 autoconf -f
 
-./configure --disable-shared --enable-static\
-    --prefix=$COSMOS\
+./configure --disable-shared --enable-static --prefix="$COSMOS"\
     CFLAGS="-Os"
 
 # run make and/or make install

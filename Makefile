@@ -48,6 +48,7 @@ gcc-11.2-patched.built.$(ARCH): binutils-2.35.2.built.$(ARCH)
 coreutils-9.4.built.$(ARCH): gmp-6.3.0.built.$(ARCH)
 
 libdfp-1.0.17pre.built.$(ARCH): gcc-11.2-patched.built.$(ARCH)
+libquadmath-0.1.built.$(ARCH): compiler-rt-18.0.0pre.built.$(ARCH)
 
 cosmo-thirdparty: cosmo-repo-thirdparty.built.$(ARCH)
 cli: tree-2.1.1.built.$(ARCH) grep-3.11.built.$(ARCH) less-643.built.$(ARCH) bash-5.2.built.$(ARCH)\

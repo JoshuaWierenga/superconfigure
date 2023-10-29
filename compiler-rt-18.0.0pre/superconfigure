@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -e
+
+# check for cosmo dirs
+if [ -z ${COSMO+x} ]; then
+    echo "could not find COSMO source directory!";
+    exit 1
+fi
+
+if [ -z ${COSMOS+x} ]; then
+    echo "could not find COSMOS install directory!";
+    exit 1
+fi
+
+TOPLEVEL=$PWD
+SRCFOLDER="llvm-project/"
+LLVMBUILDFOLDER="build/llvm/"
+RTBUILDFOLDER="build/compiler-rt/"
+
+cat > "$COSMO"/libc/isystem/future << EOF
+#ifndef COSMOPOLITAN_LIBC_ISYSTEM_FUTURE_
+#define COSMOPOLITAN_LIBC_ISYSTEM_FUTURE_
+#include "third_party/libcxx/future"
+#endif /* COSMOPOLITAN_LIBC_ISYSTEM_FUTURE_ */
+EOF
+
+if [[ ! -d "$SRCFOLDER" ]]; then
+    # need a very new commit to have binary128 fp support on x86
+    # download the source code at a specific commit without downloading everything
+    git init "$SRCFOLDER" -q
+    pushd $SRCFOLDER
+    git remote add origin https://github.com/llvm/llvm-project.git
+    git fetch origin 35649c639cd3780652156f8aaca610d0a5f578b3 --depth=1
+    git reset --hard FETCH_HEAD
+    
+    # apply patches if any
+    git apply ../patch18.0.0pre.diff
+    popd
+fi
+
+if [ "$ARCH" = x86_64 ]; then
+    LLVMARCH=X86
+elif [ "$ARCH" = aarch64 ]; then
+    LLVMARCH=AArch64
+else
+    echo "Only x86_64 and aarch64 are supported, does cosmo support more archectures now?"
+    exit 1
+fi
+
+if [[ -d "$LLVMBUILDFOLDER" ]]; then
+    pushd $LLVMBUILDFOLDER
+    make -s -i clean || true
+else
+    mkdir -p $LLVMBUILDFOLDER
+    pushd $LLVMBUILDFOLDER
+    cmake "$TOPLEVEL/$SRCFOLDER"/llvm -DCMAKE_BUILD_TYPE=Release\
+      -DLLVM_TARGETS_TO_BUILD=$LLVMARCH
+fi
+
+make -s llvm-config -j$MAXPROC
+popd
+
+if [[ -d "$RTBUILDFOLDER" ]]; then
+    cd $RTBUILDFOLDER
+    make -s -i clean || true
+else
+    mkdir -p $RTBUILDFOLDER
+    cd $RTBUILDFOLDER
+    cmake "$TOPLEVEL/$SRCFOLDER"/compiler-rt -DCMAKE_INSTALL_PREFIX="$COSMOS"\
+      -DLLVM_CMAKE_DIR="$TOPLEVEL/$LLVMBUILDFOLDER" -DCMAKE_BUILD_TYPE=Release
+fi
+
+make -s builtins -j$MAXPROC
+make -s install-builtins -j$MAXPROC
+
+echo "DONE."
