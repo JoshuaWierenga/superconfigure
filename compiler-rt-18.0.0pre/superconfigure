@@ -43,7 +43,7 @@ if [ "$ARCH" = x86_64 ]; then
 elif [ "$ARCH" = aarch64 ]; then
     LLVMARCH=AArch64
 else
-    echo "Only x86_64 and aarch64 are supported, does cosmo support more archectures now?"
+    echo "Only x86_64 and aarch64 are supported, does cosmo support more archtectures now?"
     exit 1
 fi
 
