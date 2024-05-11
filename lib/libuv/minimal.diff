@@ -1,0 +1,210 @@
+diff -r --unified libuv-1.48.0a/include/uv.h libuv-1.48.0/include/uv.h
+--- libuv-1.48.0a/include/uv.h	2024-02-08 07:20:07.000000000 +1100
++++ libuv-1.48.0/include/uv.h	2024-05-11 00:45:23.026859408 +1000
+@@ -188,12 +188,23 @@
+   XX(GETNAMEINFO, getnameinfo)                                                \
+   XX(RANDOM, random)                                                          \
+ 
++
++#ifdef __COSMOPOLITAN__
++#define XX(code, _) errno_t UV_ ## code = UV__ ## code;
++  UV_ERRNO_MAP(XX)
++#undef XX
++
++typedef enum {
++  UV_ERRNO_MAX = UV__EOF - 1
++} uv_errno_t;
++#else
+ typedef enum {
+ #define XX(code, _) UV_ ## code = UV__ ## code,
+   UV_ERRNO_MAP(XX)
+ #undef XX
+   UV_ERRNO_MAX = UV__EOF - 1
+ } uv_errno_t;
++#endif
+ 
+ typedef enum {
+   UV_UNKNOWN_HANDLE = 0,
+Only in libuv-1.48.0/src: nppBackup
+diff -r --unified libuv-1.48.0a/src/random.c libuv-1.48.0/src/random.c
+--- libuv-1.48.0a/src/random.c	2024-02-08 07:20:07.000000000 +1100
++++ libuv-1.48.0/src/random.c	2024-05-11 01:03:05.757010384 +1000
+@@ -42,11 +42,11 @@
+     rc = uv__random_devurandom(buf, buflen);
+ #elif defined(__NetBSD__)
+   rc = uv__random_sysctl(buf, buflen);
+-#elif defined(__FreeBSD__) || defined(__linux__)
++#elif defined(__FreeBSD__) || defined(__linux__) || defined(__COSMOPOLITAN__)
+   rc = uv__random_getrandom(buf, buflen);
+   if (rc == UV_ENOSYS)
+     rc = uv__random_devurandom(buf, buflen);
+-# if defined(__linux__)
++# if defined(__linux__) || defined(__COSMOPOLITAN__)
+   switch (rc) {
+     case UV_EACCES:
+     case UV_EIO:
+diff -r --unified libuv-1.48.0a/src/unix/fs.c libuv-1.48.0/src/unix/fs.c
+--- libuv-1.48.0a/src/unix/fs.c	2024-02-08 07:20:07.000000000 +1100
++++ libuv-1.48.0/src/unix/fs.c	2024-05-11 01:30:28.487244667 +1000
+@@ -247,7 +247,8 @@
+ #if defined(__linux__)                                                        \
+     || defined(_AIX71)                                                        \
+     || defined(__HAIKU__)                                                     \
+-    || defined(__GNU__)
++    || defined(__GNU__)                                                       \
++    || defined(__COSMOPOLITAN__)
+   struct timespec ts[2];
+   ts[0] = uv__fs_to_timespec(req->atime);
+   ts[1] = uv__fs_to_timespec(req->mtime);
+@@ -923,7 +924,7 @@
+   in_fd = req->flags;
+   out_fd = req->file;
+ 
+-#if defined(__linux__) || defined(__sun)
++#if defined(__linux__) || defined(__sun) || defined(__COSMOPOLITAN__)
+   {
+     off_t off;
+     ssize_t r;
+@@ -934,7 +935,7 @@
+     len = req->bufsml[0].len;
+     try_sendfile = 1;
+ 
+-#ifdef __linux__
++#if defined(__linux__)
+     r = uv__fs_try_copy_file_range(in_fd, &off, out_fd, len);
+     try_sendfile = (r == -1 && errno == ENOSYS);
+ #endif
+@@ -1029,7 +1030,8 @@
+ #if defined(__linux__)                                                         \
+     || defined(_AIX71)                                                         \
+     || defined(__sun)                                                          \
+-    || defined(__HAIKU__)
++    || defined(__HAIKU__)                                                      \
++    || defined(__COSMOPOLITAN__)
+   struct timespec ts[2];
+   ts[0] = uv__fs_to_timespec(req->atime);
+   ts[1] = uv__fs_to_timespec(req->mtime);
+@@ -1070,7 +1072,8 @@
+     defined(__sun)                ||                                           \
+     defined(__HAIKU__)            ||                                           \
+     defined(__GNU__)              ||                                           \
+-    defined(__OpenBSD__)
++    defined(__OpenBSD__)          ||                                           \
++    defined(__COSMOPOLITAN__)
+   struct timespec ts[2];
+   ts[0] = uv__fs_to_timespec(req->atime);
+   ts[1] = uv__fs_to_timespec(req->mtime);
+diff -r --unified libuv-1.48.0a/src/unix/internal.h libuv-1.48.0/src/unix/internal.h
+--- libuv-1.48.0a/src/unix/internal.h	2024-02-08 07:20:07.000000000 +1100
++++ libuv-1.48.0/src/unix/internal.h	2024-05-11 01:11:55.537086617 +1000
+@@ -177,7 +177,7 @@
+   int fds[1];
+ };
+ 
+-#ifdef __linux__
++#if defined(__linux__) || defined(__COSMOPOLITAN__)
+ struct uv__statx_timestamp {
+   int64_t tv_sec;
+   uint32_t tv_nsec;
+@@ -207,7 +207,7 @@
+   uint32_t stx_dev_minor;
+   uint64_t unused1[14];
+ };
+-#endif /* __linux__ */
++#endif /* __linux__ || __COSMOPOLITAN__ */
+ 
+ #if defined(_AIX) || \
+     defined(__APPLE__) || \
+@@ -424,7 +424,7 @@
+   return rc;
+ }
+ 
+-#if defined(__linux__)
++#if defined(__linux__) || defined(__COSMOPOLITAN__)
+ void uv__fs_post(uv_loop_t* loop, uv_fs_t* req);
+ ssize_t
+ uv__fs_copy_file_range(int fd_in,
+@@ -466,7 +466,8 @@
+                        unsigned int flags);
+ #endif
+ 
+-#if defined(__linux__) || (defined(__FreeBSD__) && __FreeBSD_version >= 1301000)
++#if defined(__linux__) || (defined(__FreeBSD__) && __FreeBSD_version >= 1301000) || \
++    defined(__COSMOPOLITAN__)
+ #define UV__CPU_AFFINITY_SUPPORTED 1
+ #else
+ #define UV__CPU_AFFINITY_SUPPORTED 0
+diff -r --unified libuv-1.48.0a/src/unix/linux.c libuv-1.48.0/src/unix/linux.c
+--- libuv-1.48.0a/src/unix/linux.c	2024-02-08 07:20:07.000000000 +1100
++++ libuv-1.48.0/src/unix/linux.c	2024-05-11 00:51:51.216915168 +1000
+@@ -40,9 +40,14 @@
+ #include <ifaddrs.h>
+ #include <net/ethernet.h>
+ #include <net/if.h>
++#ifdef __COSMOPOLITAN__
++#include <libc/sock/epoll.h>
++#include <libc/sysv/consts/epoll.h>
++#else
+ #include <netpacket/packet.h>
+ #include <sys/epoll.h>
+ #include <sys/inotify.h>
++#endif
+ #include <sys/mman.h>
+ #include <sys/param.h>
+ #include <sys/prctl.h>
+Only in libuv-1.48.0/src/unix: nppBackup
+diff -r --unified libuv-1.48.0a/src/unix/tcp.c libuv-1.48.0/src/unix/tcp.c
+--- libuv-1.48.0a/src/unix/tcp.c	2024-02-08 07:20:07.000000000 +1100
++++ libuv-1.48.0/src/unix/tcp.c	2024-05-11 01:17:09.897130756 +1000
+@@ -612,7 +612,7 @@
+ int uv_socketpair(int type, int protocol, uv_os_sock_t fds[2], int flags0, int flags1) {
+   uv_os_sock_t temp[2];
+   int err;
+-#if defined(__FreeBSD__) || defined(__linux__)
++#if defined(__FreeBSD__) || defined(__linux__) || defined(__COSMOPOLITAN__)
+   int flags;
+ 
+   flags = type | SOCK_CLOEXEC;
+diff -r --unified libuv-1.48.0a/src/unix/udp.c libuv-1.48.0/src/unix/udp.c
+--- libuv-1.48.0a/src/unix/udp.c	2024-02-08 07:20:07.000000000 +1100
++++ libuv-1.48.0/src/unix/udp.c	2024-05-11 01:18:31.127143074 +1000
+@@ -467,7 +467,7 @@
+  * servers.
+  */
+ static int uv__set_recverr(int fd, sa_family_t ss_family) {
+-#if defined(__linux__)
++#if defined(__linux__) || defined(__COSMOPOLITAN__)
+   int yes;
+ 
+   yes = 1;
+@@ -892,7 +892,8 @@
+     !defined(__ANDROID__) &&                                        \
+     !defined(__DragonFly__) &&                                      \
+     !defined(__QNX__) &&                                            \
+-    !defined(__GNU__)
++    !defined(__GNU__) &&                                            \
++    !defined(__COSMOPOLITAN__)
+ static int uv__udp_set_source_membership4(uv_udp_t* handle,
+                                           const struct sockaddr_in* multicast_addr,
+                                           const char* interface_addr,
+diff -r --unified libuv-1.48.0a/src/uv-common.h libuv-1.48.0/src/uv-common.h
+--- libuv-1.48.0a/src/uv-common.h	2024-02-08 07:20:07.000000000 +1100
++++ libuv-1.48.0/src/uv-common.h	2024-05-11 00:55:31.176947124 +1000
+@@ -396,7 +396,7 @@
+ void uv__metrics_update_idle_time(uv_loop_t* loop);
+ void uv__metrics_set_provider_entry_time(uv_loop_t* loop);
+ 
+-#ifdef __linux__
++#if defined(__linux__) || defined(__COSMOPOLITAN__)
+ struct uv__iou {
+   uint32_t* sqhead;
+   uint32_t* sqtail;
+@@ -417,7 +417,7 @@
+   uint32_t in_flight;
+   uint32_t flags;
+ };
+-#endif  /* __linux__ */
++#endif  /* __linux__ || __COSMOPOLITAN__ */
+ 
+ struct uv__loop_internal_fields_s {
+   unsigned int flags;
