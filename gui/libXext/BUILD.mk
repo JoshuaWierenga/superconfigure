@@ -1,5 +1,5 @@
 
-LIBXEXT_SRC := https://www.x.org/archive/individual/lib/libXext-1.3.5.tar.gz 
+LIBXEXT_SRC := https://www.x.org/archive/individual/lib/libXext-1.3.6.tar.gz
 LIBXEXT_DEPS := gui/libX11
 
 LIBXEXT_CONFIG_ARGS = --disable-shared --enable-static\

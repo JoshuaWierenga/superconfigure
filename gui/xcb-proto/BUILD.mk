@@ -1,5 +1,5 @@
 
-XCB_PROTO_SRC := https://www.x.org/archive/individual/proto/xcb-proto-1.16.0.tar.gz
+XCB_PROTO_SRC := https://www.x.org/archive/individual/proto/xcb-proto-1.17.0.tar.gz
 XCB_PROTO_DEPS := gui/util-macros
 
 XCB_PROTO_CONFIG_ARGS = --disable-shared --enable-static\

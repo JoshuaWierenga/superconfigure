@@ -1,5 +1,5 @@
 
-UTIL_MACROS_SRC := https://www.x.org/archive/individual/util/util-macros-1.20.0.tar.gz 
+UTIL_MACROS_SRC := https://www.x.org/archive/individual/util/util-macros-1.20.1.tar.gz
 UTIL_MACROS_CONFIG_ARGS = --prefix="$$(COSMOS)" CFLAGS="-Os"
 
 $(eval $(call DOWNLOAD_SOURCE,gui/util-macros,$(UTIL_MACROS_SRC)))

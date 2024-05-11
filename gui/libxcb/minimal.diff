@@ -1,5 +1,6 @@
---- libxcb-1.16-old/src/config.h.in	2023-08-16 22:18:36.000000000 +0200
-+++ libxcb-1.16/src/config.h.in	2023-12-02 22:47:57.624157502 +0100
+diff -r --unified libxcb-1.17.0-orig/src/config.h.in libxcb-1.17.0/src/config.h.in
+--- libxcb-1.17.0-orig/src/config.h.in	2024-04-16 01:09:34.000000000 +1000
++++ libxcb-1.17.0/src/config.h.in	2024-05-11 22:31:57.196663200 +1000
 @@ -28,7 +28,7 @@
  #undef HAVE_MINIX_CONFIG_H
  

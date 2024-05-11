@@ -1,5 +1,5 @@
 
-XORGPROTO_SRC := https://www.x.org/archive/individual/proto/xorgproto-2023.2.tar.gz 
+XORGPROTO_SRC := https://www.x.org/archive/individual/proto/xorgproto-2024.1.tar.gz
 XORGPROTO_DEPS := gui/util-macros
 
 XORGPROTO_CONFIG_ARGS = --disable-shared --enable-static\

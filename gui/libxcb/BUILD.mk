@@ -1,5 +1,5 @@
 
-LIBXCB_SRC := https://www.x.org/archive/individual/lib/libxcb-1.16.tar.gz 
+LIBXCB_SRC := https://www.x.org/archive/individual/lib/libxcb-1.17.0.tar.gz
 LIBXCB_DEPS := gui/xcb-proto gui/libXau
 
 LIBXCB_CONFIG_ARGS = --disable-shared --enable-static\

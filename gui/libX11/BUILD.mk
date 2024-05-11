@@ -1,5 +1,5 @@
 
-LIBX11_SRC := https://www.x.org/archive/individual/lib/libX11-1.8.7.tar.gz
+LIBX11_SRC := https://www.x.org/archive/individual/lib/libX11-1.8.9.tar.gz
 LIBX11_DEPS := gui/libxcb
 
 LIBX11_CONFIG_ARGS = --disable-shared --enable-static\
