@@ -8,7 +8,7 @@ SDL2_image_CONFIG_ARGS := --prefix="$$(COSMOS)"\
    CFLAGS="-Os"
 
 $(eval $(call DOWNLOAD_SOURCE,gui/SDL2_image,$(SDL2_image_SRC)))
-$(eval $(call SPECIFY_DEPS,gui/SDL2,$(SDL2_DEPS)))
+$(eval $(call SPECIFY_DEPS,gui/SDL2_image,$(SDL2_image_DEPS)))
 $(eval $(call AUTOTOOLS_BUILD,gui/SDL2_image,$(SDL2_image_CONFIG_ARGS),$(SDL2_image_CONFIG_ARGS)))
 
 o/gui/SDL2_image/setup: o/gui/SDL2_image/patched
