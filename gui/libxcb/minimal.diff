@@ -1,6 +1,15 @@
 diff -r --unified libxcb-1.17.0-orig/src/config.h.in libxcb-1.17.0/src/config.h.in
 --- libxcb-1.17.0-orig/src/config.h.in	2024-04-16 01:09:34.000000000 +1000
-+++ libxcb-1.17.0/src/config.h.in	2024-05-11 22:31:57.196663200 +1000
++++ libxcb-1.17.0/src/config.h.in	2024-05-13 14:40:24.952532803 +1000
+@@ -7,7 +7,7 @@
+ #undef HASXDMAUTH
+ 
+ /* Define if your platform supports abstract sockets */
+-#undef HAVE_ABSTRACT_SOCKETS
++#undef HAVE_ABSTRACT_SOCKETS_BLOCK
+ 
+ /* Define to 1 if you have the <dlfcn.h> header file. */
+ #undef HAVE_DLFCN_H
 @@ -28,7 +28,7 @@
  #undef HAVE_MINIX_CONFIG_H
  
