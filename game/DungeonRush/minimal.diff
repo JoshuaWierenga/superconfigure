@@ -1,0 +1,186 @@
+diff -r --unified DungeonRush-1.1-beta-orig/CMakeLists.txt DungeonRush-1.1-beta/CMakeLists.txt
+--- DungeonRush-1.1-beta-orig/CMakeLists.txt	2020-11-22 00:22:39.000000000 +1100
++++ DungeonRush-1.1-beta/CMakeLists.txt	2024-05-13 22:35:19.236598143 +1000
+@@ -13,7 +13,6 @@
+ find_package(SDL2 REQUIRED)
+ find_package(SDL2_image REQUIRED)
+ find_package(SDL2_net REQUIRED)
+-find_package(SDL2_mixer REQUIRED)
+ find_package(SDL2_ttf REQUIRED)
+ 
+ set(BIN_NAME dungeon_rush)
+@@ -24,7 +23,11 @@
+ 
+ target_include_directories(${BIN_NAME} PUBLIC src)
+ target_include_directories(${BIN_NAME} PUBLIC ${SDL2_INCLUDE_DIR})
+-target_link_libraries(${BIN_NAME} SDL2::Main SDL2::Net SDL2::Image SDL2::Mixer 
+-                      SDL2::TTF m)
++target_link_libraries(${BIN_NAME} SDL2 ${SDL2_INCLUDE_DIR}/lib/libX11.a
++                      ${SDL2_INCLUDE_DIR}/lib/libxcb.a
++                      ${SDL2_INCLUDE_DIR}/lib/libXau.a
++                      ${SDL2_INCLUDE_DIR}/lib/libXext.a
++                      SDL2::Main SDL2::Net SDL2::Image SDL2::TTF
++                      ${SDL2_INCLUDE_DIR}/lib/libfreetype.a m)
+ 
+ file(COPY res DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+diff -r --unified DungeonRush-1.1-beta-orig/src/audio.c DungeonRush-1.1-beta/src/audio.c
+--- DungeonRush-1.1-beta-orig/src/audio.c	2020-11-22 00:22:39.000000000 +1100
++++ DungeonRush-1.1-beta/src/audio.c	2024-05-13 22:35:19.236598143 +1000
+@@ -4,31 +4,19 @@
+ #include "res.h"
+ 
+ extern const int bgmNums;
+-extern Mix_Music *bgms[AUDIO_BGM_SIZE];
+-extern Mix_Chunk *sounds[AUDIO_SOUND_SIZE];
+ 
+ int nowBgmId = -1;
+ void playBgm(int id) {
+   if (nowBgmId == id) return;
+-  if (nowBgmId == -1)
+-    Mix_PlayMusic(bgms[id], -1);
+-  else
+-    Mix_FadeInMusic(bgms[id], -1, BGM_FADE_DURATION);
+   nowBgmId = id;
+ }
+ void stopBgm() {
+-  Mix_FadeOutMusic(BGM_FADE_DURATION);
+   nowBgmId = -1;
+ }
+-void randomBgm() { playBgm(randInt(1, bgmNums - 1)); }
++void randomBgm() { }
+ void playAudio(int id) {
+-  if (id >= 0) Mix_PlayChannel(-1, sounds[id], 0);
+ }
+ void pauseSound() {
+-  Mix_Pause(-1);
+-  Mix_PauseMusic();
+ }
+ void resumeSound() {
+-  Mix_Resume(-1);
+-  Mix_ResumeMusic();
+ }
+diff -r --unified DungeonRush-1.1-beta-orig/src/audio.h DungeonRush-1.1-beta/src/audio.h
+--- DungeonRush-1.1-beta-orig/src/audio.h	2020-11-22 00:22:39.000000000 +1100
++++ DungeonRush-1.1-beta/src/audio.h	2024-05-13 22:35:19.236598143 +1000
+@@ -1,7 +1,6 @@
+ #ifndef SNAKE_AUDIO_H_
+ #define SNAKE_AUDIO_H_
+ #include <SDL.h>
+-#include <SDL_mixer.h>
+ 
+ #define BGM_FADE_DURATION 800
+ void playBgm(int);
+diff -r --unified DungeonRush-1.1-beta-orig/src/res.c DungeonRush-1.1-beta/src/res.c
+--- DungeonRush-1.1-beta-orig/src/res.c	2020-11-22 00:22:39.000000000 +1100
++++ DungeonRush-1.1-beta/src/res.c	2024-05-13 22:35:19.236598143 +1000
+@@ -2,7 +2,6 @@
+ #include <SDL.h>
+ #include <SDL_image.h>
+ #include <SDL_ttf.h>
+-#include <SDL_mixer.h>
+ #include <SDL_net.h>
+ #include <stdbool.h>
+ #include <stdio.h>
+@@ -84,17 +83,14 @@
+ 
+ Sprite commonSprites[COMMON_SPRITE_SIZE];
+ 
+-Mix_Music *mainTitle;
+-Mix_Music *bgms[AUDIO_BGM_SIZE];
+ int soundsCount;
+-Mix_Chunk *sounds[AUDIO_SOUND_SIZE];
+ 
+ bool init() {
+   // Initialization flag
+   bool success = true;
+ 
+   // Initialize SDL
+-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
++  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+     printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+     success = false;
+   } else {
+@@ -134,11 +130,6 @@
+                  TTF_GetError());
+           success = false;
+         }
+-        //Initialize SDL_mixer
+-        if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 ) {
+-          printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
+-          success = false;
+-        }
+         //Initialize SDL_net
+         if (SDLNet_Init() == -1) {
+           printf("SDL_Net_Init: %s\n", SDLNet_GetError());
+@@ -212,29 +203,7 @@
+   return true;
+ }
+ bool loadAudio() {
+-  bool success = true;
+-  for (int i = 0; i < bgmNums; i++) {
+-    bgms[i] = Mix_LoadMUS(bgmsPath[i]);
+-    success &= bgms[i] != NULL;
+-    if (!bgms[i]) printf("Failed to load %s: SDL_mixer Error: %s\n", bgmsPath[i], Mix_GetError());
+-    #ifdef DBG
+-    else printf("BGM %s loaded\n", bgmsPath[i]);
+-    #endif
+-  }
+-  FILE* f = fopen(soundsPath,"r");
+-  char buf[PATH_LEN], path[PATH_LEN<<1];
+-  while (~fscanf(f, "%s", buf)) {
+-    sprintf(path, "%s%s", soundsPathPrefix, buf);
+-    sounds[soundsCount] = Mix_LoadWAV(path);
+-    success &= sounds[soundsCount] != NULL;
+-    if (!sounds[soundsCount]) printf("Failed to load %s: : SDL_mixer Error: %s\n", path, Mix_GetError());
+-    #ifdef DBG
+-    else printf("Sound #%d: %s\n", soundsCount, path);
+-    #endif
+-    soundsCount++;
+-  }
+-  fclose(f);
+-  return success;
++  return true;
+ }
+ bool loadMedia() {
+   // Loading success flag
+@@ -287,7 +256,6 @@
+   // Quit SDL subsystems
+   TTF_Quit();
+   IMG_Quit();
+-  Mix_CloseAudio();
+   SDLNet_Quit();
+   SDL_Quit();
+ }
+diff -r --unified DungeonRush-1.1-beta-orig/src/types.h DungeonRush-1.1-beta/src/types.h
+--- DungeonRush-1.1-beta-orig/src/types.h	2020-11-22 00:22:39.000000000 +1100
++++ DungeonRush-1.1-beta/src/types.h	2024-05-13 22:35:19.236598143 +1000
+@@ -1,7 +1,6 @@
+ #ifndef SNAKE_TYPES_
+ #define SNAKE_TYPES_
+ #include <SDL.h>
+-#include <SDL_mixer.h>
+ #include <stdbool.h>
+ 
+ #define TEXT_LEN 1024
+diff -r --unified DungeonRush-1.1-beta-orig/src/ui.c DungeonRush-1.1-beta/src/ui.c
+--- DungeonRush-1.1-beta-orig/src/ui.c	2020-11-22 00:22:39.000000000 +1100
++++ DungeonRush-1.1-beta/src/ui.c	2024-05-13 22:35:19.236598143 +1000
+@@ -1,7 +1,6 @@
+ #include "ui.h"
+ 
+ #include <SDL.h>
+-#include <SDL_mixer.h>
+ #include <stdbool.h>
+ #include <stdlib.h>
+ #include <string.h>
+diff -r --unified DungeonRush-1.1-beta-orig/src/weapon.c DungeonRush-1.1-beta/src/weapon.c
+--- DungeonRush-1.1-beta-orig/src/weapon.c	2020-11-22 00:22:39.000000000 +1100
++++ DungeonRush-1.1-beta/src/weapon.c	2024-05-13 22:35:19.236598143 +1000
+@@ -7,7 +7,6 @@
+ #include <stdio.h>
+ 
+ extern Texture textures[RES_HALO_EXPLOSION2];
+-extern Mix_Chunk* sounds[AUDIO_SOUND_SIZE];
+ 
+ Weapon weapons[WEAPONS_SIZE];
+ void initWeapon(Weapon* self, int birthTextureId, int deathTextureId,
