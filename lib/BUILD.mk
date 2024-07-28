@@ -1,5 +1,8 @@
 
+include lib/alsa/BUILD.mk
 include lib/certs/BUILD.mk
+include lib/cups/BUILD.mk
+include lib/fontconfig/BUILD.mk
 include lib/freetype/BUILD.mk
 include lib/fribidi/BUILD.mk
 include lib/gdbm/BUILD.mk
@@ -26,6 +29,7 @@ include lib/mpc/BUILD.mk
 include lib/mpfr/BUILD.mk
 include lib/ncurses/BUILD.mk
 include lib/nettle/BUILD.mk
+include lib/oniguruma/BUILD.mk
 include lib/openssl/BUILD.mk
 include lib/pcre/BUILD.mk
 include lib/readline/BUILD.mk
