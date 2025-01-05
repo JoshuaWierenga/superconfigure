@@ -5,6 +5,7 @@ LIBFFI_CONFIG_ARGS = --prefix=$$(COSMOS)\
     --disable-shared --enable-static\
     --without-pic --with-gnu-ld\
     --disable-exec-static-tramp\
+    --build=$$(ARCH)-linux-gnu\
     CFLAGS="-Os"
 
 $(eval $(call DOWNLOAD_SOURCE,lib/libffi,$(LIBFFI_SRC)))
